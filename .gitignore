@@ -2,10 +2,10 @@
 ########################
 *.itpl
 *.xml
-*.fml
 *.plist
 *.pyc
 *.jpg
 *.jpeg
 *.png
 *.tiff
+.DS_Store
