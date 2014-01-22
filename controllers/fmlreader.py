@@ -61,173 +61,14 @@ import xml.etree.ElementTree as ET
 import plistlib as PLIB
 import os as OS
 import baseparts as BP
-import elems as _els
 import formeditor as FE
-import reorderform as ROF
+import reorderform as ROF		##eventually move this out
+from boxdict import _boxtypes
+from fmltodict import _xmltranslate, _elemdict, _xmltextlocation
 from pprint import pprint as pp
 
 FMLFOLDER = 'fml'
 FMLFILE = 'test.fml'
-
-###
-# dictionaries to 'translate' FML terms into the correct names for the DB.
-# keys are 'fml' terms, values are .itpl terms.
-# a good example is _xmlcheckbox: 'on' is the fml term, 'checked_narrative'
-# is the .itpl term. this script will see the fml term and replace it with
-# the .itpl term.
-
-_xmltextfield = {
-	"req": "is_required",
-	"remind": "placeholder_text",
-	"chars": "max_value",
-	"noclip": "hide_from_clipboard"
-}
-
-_xmltextbox = {
-	"req": "is_required",
-	"remind": "placeholder_text",
-	"noclip": "hide_from_clipboard"
-}
-
-_xmlpopup = {
-	"req": "is_required",
-	"remind": "placeholder_text",
-	"noclip": "hide_from_clipboard",
-	"list": "popup_values",
-	"edit": "dynamic_list"
-}
-
-_xmlcheckbox = {
-	"req": "is_required",
-	"remind": "placeholder_text",
-	"on": "checked_narrative",
-	"off": "unchecked_narrative",
-	"noclip": "hide_from_clipboard"
-}
-
-_xmllabel = {
-	"req": "is_required",
-	"remind": "placeholder_text",
-	"noclip": "hide_from_clipboard"
-}
-
-_xmlslider = {
-	"req": "is_required",
-	"remind": "placeholder_text",
-	"noclip": "hide_from_clipboard",
-	"min": "min_value",
-	"max": "max_value",
-	"start": "default_value",
-	"tick": "slider_precision"
-}
-
-#needs improvement
-_xmldrawing = {
-	"req": "is_required",
-	"remind": "placeholder_text",
-	"noclip": "hide_from_clipboard",
-	"img": "imageObjData"
-}
-
-_xmlmenu = {
-	"req": "is_required",
-	"remind": "placeholder_text",
-	"noclip": "hide_from_clipboard",
-	"list": "popup_values",
-	"sublist": "sub_view_list",
-	"edit": "dynamic_list",
-	"subedit": "sub_view_dynamic",
-	"multi": "multiple_selection",
-	"subtype": "sub_view_type"
-}
-
-_xmlseg = {
-	"req": "is_required",
-	"remind": "placeholder_text",
-	"noclip": "hide_from_clipboard"
-}
-
-_xmlblock = {
-	"req": "is_required",
-	"remind": "placeholder_text",
-	"noclip": "hide_from_clipboard"
-}
-
-###
-# these three dicts are dicts of dicts. they are used to reference the correct
-# dict when attempting to translate FML terms to .itpl terms.
-# The keys are the 'fml' terms, the values are the corresponding dicts.
-# These dicts need to be updated at the same time to keep everything working;
-# if the FML term for some data changes, it'll need to be updated in all of these.
-# if I level up I might figure out a better way to map all the things.
-
-_xmltranslate = {
-	"textfield": _xmltextfield,
-	"textbox": _xmltextbox,
-	"popup": _xmlpopup,
-	"checkbox": _xmlcheckbox,
-	"label": _xmllabel,
-	"slider": _xmlslider,
-	"drawing": _xmldrawing,
-	"menu": _xmlmenu,
-	"seg": _xmlseg,
-	"block": _xmlblock,
-	"phone": _xmltextfield,
-	"ssn": _xmltextfield,
-	"zip": _xmltextfield,
-	"date": _xmltextfield
-}
-_elemdict = {
-	"textfield": _els.make_textfield,
-	"textbox": _els.make_textbox,
-	"popup": _els.make_popup,
-	"checkbox": _els.make_checkbox,
-	"label": _els.make_label,
-	"slider": _els.make_slider,
-	"drawing": _els.make_draw_elem,
-	"menu": _els.make_list,
-	"seg": _els.make_seg_control,
-	"block": _els.make_html_block,
-	"phone": _els.make_phonefield,
-	"ssn": _els.make_ssnfield,
-	"zip": _els.make_zipfield,
-	"date": _els.make_datefield	
-}
-_xmltextlocation = {
-	"textfield": "field_label",
-	"textbox": "field_label",
-	"popup": "field_label",
-	"checkbox": "field_label",
-	"label": "field_label",
-	"slider": "field_label",
-	"drawing": "field_label",
-	"menu": "field_label",
-	"seg": "field_label",
-	"block": "checked_narrative",
-	"phone": "field_label",
-	"ssn": "field_label",
-	"zip": "field_label",
-	"date": "field_label"
-}
-
-# static sections need a dict too. the key is the box name,
-# the value is the mp_box_type.
-_boxtypes = {
-	"allergies": 12,
-	"attach": 14,
-	"careslip": 19,
-	"edurec": 16,
-	"erx": 8,
-	"immune": 13,
-	"medrec": 6,
-	"orders": 11,
-	"prevcare": 15,
-	"problem": 10,
-	"refer": 17,
-	"sig": 21,
-	"smoke": 2,
-	"vitals": 9
-}
 
 def read_xml(xmlpath):
 	"""Loads XML from stated path."""
@@ -263,7 +104,6 @@ def new_section_from_xml(xmlsection):
 	newSectionOuter['iform_section'] = newSectionInner
 	return newSectionOuter
 
-	
 def new_elem_from_xml(xmlelement):
 	"""Returns an element populated with translated FML values."""
 	try:
@@ -271,9 +111,9 @@ def new_elem_from_xml(xmlelement):
 		translator = _xmltranslate[elemType]	##gets right function for next line
 		newElem = _elemdict[elemType]()			##new blank element of elemType
 	except KeyError:
-		##raise KeyError("There's no <%s> element in FML.\nAvailable elements are: %s." % (elemType,''.join([_elemdict.keys(), '\n'])))
+		##log to Terminal and add 'error' label element
 		print ("There's no <%s> element in FML.\nAvailable elements are: \n%s\n" % (elemType,''.join(['\n\t%s' % x for x in _elemdict.keys()])))
-		return _els.make_label(field_label="An error occurred.")
+		return _elemdict['label'](field_label="**An error occurred here. REMOVE this element and correct.**")
 	elemTextKey = _xmltextlocation[elemType]	##gets k of 'open text'
 	elemTextVal = xmlelement.text				##gets v of 'open text'
 	elemAttrib = xmlelement.attrib.items()		##attributes as list of tuples
@@ -307,7 +147,6 @@ def img_path_to_base64(imageobjdatapath):
 	Should be called after the FML element is translated into a dict."""
 	with open(imageobjdatapath, "rb") as f:
 		dataToTranslate = f.read()
-		#return repr(dataToTranslate.encode("base64")).encode('base64')
 		return PLIB.Data(dataToTranslate)
 
 def xml_to_form(xmlform):
@@ -321,10 +160,9 @@ def xml_to_form(xmlform):
 			newElem = new_elem_from_xml(element)
 			FE.add_elem_to_section(newElem, newSection)
 		FE.add_section_to_form(newSection, newForm)
-	ROF.fix_all_orders(newForm)
+	ROF.fix_all_orders(newForm)		##this eventually goes elsewhere
 	return newForm
 
-	
 def tidy_up(somexml):
 	"""Ensures strings are unicode, removes newlines and tabs from strings, 
 	and replaces the ## delimiter as newlines from lists/sublists.
@@ -345,8 +183,6 @@ def test(filepath=FMLFILE):
 	Both the XML and the dict are returned as (XML, dict) tuple.
 	If need be, an optional filepath can be passed."""
 	newpath = OS.path.join(FMLFOLDER, filepath)
-	#print newpath
-	#print OS.path.exists(newpath)
 	xmlF = read_xml(newpath)
 	newF = xml_to_form(xmlF)
 	return (xmlF, newF)
