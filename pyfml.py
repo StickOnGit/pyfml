@@ -42,8 +42,10 @@ def save_itpl(savefile):
 	if not os.path.exists(ITPLFOLDER):
 		os.mkdir(ITPLFOLDER)
 	dups = 1
+	finalname = savename + '.itpl'
 	while os.path.exists(savepath):
-		savepath = os.path.join(ITPLFOLDER, savename + str(dups) + '.itpl')
+		finalname = savename + str(dups) + '.itpl'
+		savepath = os.path.join(ITPLFOLDER, finalname)
 		dups += 1
 	try:
 		PLIB.writePlist(savefile, savepath)
@@ -52,7 +54,7 @@ def save_itpl(savefile):
 		print "path was %s" % savepath
 		end()
 	else:
-		print "\nSaved %s." % savename
+		print "\nSaved '%s' to '%s'." % (finalname, savepath)
 		
 def init():
 	"""Creates fml and itpl folders in the local directory."""
@@ -94,12 +96,12 @@ def convert_to_itpl(xmlform):
 
 def oops(userdata=None):
 	if not userdata:
-		print "pyFML didn't see a command."
+		print "\tpyFML didn't see a command."
 	else:
-		print "pyFML doesn't understand or work with %s. (...yet?)" % userdata
+		print "\tpyFML doesn't understand or work with %s. (...yet?)" % userdata
 	print """Try:
-	\t pyfml.py my_file_name \t--\tto read an XML file; or
-	\t pyfml.py init \t--\tto prepare this directory for work."""
+	pyfml.py file_name		-- read an XML file; or
+	pyfml.py init			-- prepare this directory for work."""
 	end()
 
 if __name__ == "__main__":
@@ -107,9 +109,7 @@ if __name__ == "__main__":
 	try:
 		flag = sys.argv[1]
 	except IndexError:
-		print """pyFML didn't see a command. Try:
-		\t pyfml.py my_file_name to read an XML file; or
-		\t pyfml.py init to prepare this directory for work."""
+		oops()
 		end()
 	else:
 		if flag == 'init':
