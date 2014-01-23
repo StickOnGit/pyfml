@@ -16,7 +16,7 @@ def correct_order(somelist):
 		else:
 			pass
 
-def fix_all_orders(pyform):
+def set_order_num(pyform):
 	"""Sets the order_num of each element and section for a form dict."""
 	try:
 		correct_order(pyform['iformSectionTiesArray'])
@@ -40,3 +40,39 @@ def fix_all_orders(pyform):
 		return "Found at least one section, but not every section had elements to reorder."
 	elif unfixed_sections == number_of_sections:
 		return "Did not fix any element order_num within sections."
+		
+def set_field_ids(pyform, fieldID=-1):
+	"""Sets incremental negative iform_field_ids.
+	Can take optional fieldID argument. Apparently field_id is always
+	negative in the .plist so if the argument is positive, it will
+	use the additive inverse instead. (yes, i googled that word)"""
+	try:
+		fieldID = int(fieldID)
+		if fieldID > 0:
+			fieldID *= -1
+	except:	##why bother specifying TypeError and ValueError, who cares
+		print "field_id should be a number, preferably negative."
+		fieldID = -1
+	for section in pyform['iformSectionTiesArray']:
+		try:
+			for element in section['iform_section']['iformFieldsArray']:
+				element['iform_field_id'] = fieldID
+				fieldID -= 1
+		except KeyError:
+			pass
+			
+def set_narrative(pyform):
+	"""Automatically creates a basic narrative string."""
+	for section in pyform['iformSectionTiesArray']:
+		narrString = ''
+		if 'iform_section' in section:
+			for element in section['iform_section']['iformFieldsArray']:
+				if 'iform_field_id' in element:
+					insertStr = "{{%d.%s}}" % (element['iform_field_id'], element['field_label'])
+					narrString += insertStr
+				else:
+					pass
+			if narrString:
+				section['iform_section']['narrative_string'] = narrString
+			else:
+				pass

@@ -2,7 +2,7 @@
 
 """This module imports XML and converts it to a plist-compatible format.
 
-The primary method here is xml_to_form. It iterates over the XML tree and looks 
+The primary method here is xml_to_dict. It iterates over the XML tree and looks 
 for these terms as tags, attributes, and as children elements of the parent. It
 compares these terms to the correct dictionary for the element and replaces the
 FML word with the accepted .itpl word.
@@ -149,7 +149,7 @@ def img_path_to_base64(imageobjdatapath):
 		dataToTranslate = f.read()
 		return PLIB.Data(dataToTranslate)
 
-def xml_to_form(xmlform):
+def xml_to_dict(xmlform):
 	"""Pass this an FML file; returns a dict for plistlib to convert to .itpl.
 	The order_num of elements is determined on translation, so it need not be
 	present in the FML file."""
@@ -160,7 +160,9 @@ def xml_to_form(xmlform):
 			newElem = new_elem_from_xml(element)
 			FE.add_elem_to_section(newElem, newSection)
 		FE.add_section_to_form(newSection, newForm)
-	ROF.fix_all_orders(newForm)		##this eventually goes elsewhere
+	#ROF.set_order_num(newForm)		##this eventually goes elsewhere
+	#ROF.set_field_ids(newForm)		##	"		"		"		"
+	#ROF.set_narrative(newForm)		##	"		"		"		"
 	return newForm
 
 def tidy_up(somexml):
@@ -184,9 +186,9 @@ def test(filepath=FMLFILE):
 	If need be, an optional filepath can be passed."""
 	newpath = OS.path.join(FMLFOLDER, filepath)
 	xmlF = read_xml(newpath)
-	newF = xml_to_form(xmlF)
-	return (xmlF, newF)
+	newF = xml_to_dict(xmlF)
+	return newF
 	
 def quicktest():
 	"""Even shorter test! Just pretty-prints the dict version of the FML file. Returns nothing."""
-	pp(test()[1])
+	pp(test())
