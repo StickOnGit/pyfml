@@ -37,20 +37,20 @@ def save_itpl(savefile):
 	"""Saves .itpl file.
 	Saves in *local* itpl folder. Will create folder if not seen.
 	Inserts numeral before extension if saving a duplicate."""
-	savename = savefile['template_name']
-	savepath = os.path.join(ITPLFOLDER, savename)
 	if not os.path.exists(ITPLFOLDER):
 		os.mkdir(ITPLFOLDER)
+	savename = savefile['template_name']
+	finalname = '%s.itpl' % savename
+	savepath = os.path.join(ITPLFOLDER, finalname)
 	dups = 1
-	finalname = savename + '.itpl'
 	while os.path.exists(savepath):
-		finalname = savename + str(dups) + '.itpl'
+		finalname = '%s%d.itpl' % (savename, dups)
 		savepath = os.path.join(ITPLFOLDER, finalname)
 		dups += 1
 	try:
 		PLIB.writePlist(savefile, savepath)
 	except IOError as err:
-		print "\tCouldn't save %s. Apparently, %s" % (savename, err.strerror)
+		print "\tCouldn't save %s. Apparently, %s" % (finalname, err.strerror)
 		print "path was %s" % savepath
 		end()
 	else:
