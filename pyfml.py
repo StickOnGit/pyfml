@@ -8,8 +8,10 @@ import plistlib as PLIB
 from controllers.fmlreader import xml_to_dict, read_xml
 from controllers.reorderform import set_order_num, set_field_ids, set_narrative
 
-FMLFOLDER = 'fml'
-ITPLFOLDER = 'itpl'
+_FMLFOLDER = 'fml'
+_ITPLFOLDER = 'itpl'
+_IMGFOLDER = 'images'
+_ALLFOLDERS = [_FMLFOLDER, _ITPLFOLDER, _IMGFOLDER]
 
 def end():
 	print
@@ -18,15 +20,15 @@ def end():
 def load_fml(loadpath):
 	"""Loads .fml file.
 	Looks under *local* fml folder. Will create folder if not seen."""
-	file = os.path.join(FMLFOLDER, loadpath)
+	file = os.path.join(_FMLFOLDER, loadpath)
 	print "...loading from %s" % file
 	try:	#load the FML file
 		fmlfile = read_xml(file)
 	except IOError:
-		if os.path.exists(FMLFOLDER):	#does fml folder exist? if so, must not be fml file present
+		if os.path.exists(_FMLFOLDER):	#does fml folder exist? if so, must not be fml file present
 			print "\tDidn't see %s in your fml folder." % file
 		else:	#if local fml folder doesn't exist, create it.
-			os.mkdir(FMLFOLDER)
+			os.mkdir(_FMLFOLDER)
 			print "\tCreated local fml folder.\n\tHUMAN: move fml file to folder, try again."
 		end()
 	else:
@@ -37,15 +39,15 @@ def save_itpl(savefile):
 	"""Saves .itpl file.
 	Saves in *local* itpl folder. Will create folder if not seen.
 	Inserts numeral before extension if saving a duplicate."""
-	if not os.path.exists(ITPLFOLDER):
-		os.mkdir(ITPLFOLDER)
+	if not os.path.exists(_ITPLFOLDER):
+		os.mkdir(_ITPLFOLDER)
 	savename = savefile['template_name']
 	finalname = '%s.itpl' % savename
-	savepath = os.path.join(ITPLFOLDER, finalname)
+	savepath = os.path.join(_ITPLFOLDER, finalname)
 	dups = 1
 	while os.path.exists(savepath):
 		finalname = '%s%d.itpl' % (savename, dups)
-		savepath = os.path.join(ITPLFOLDER, finalname)
+		savepath = os.path.join(_ITPLFOLDER, finalname)
 		dups += 1
 	try:
 		PLIB.writePlist(savefile, savepath)
@@ -61,7 +63,8 @@ def init():
 	print "\tPreparing current directory..."
 	foldersmade = 0
 	alreadyexists = 0
-	for folder in [FMLFOLDER, ITPLFOLDER]:
+	totalneededfolders = len(_ALLFOLDERS)
+	for folder in _ALLFOLDERS:
 		if not os.path.exists(folder):
 			try:
 				os.mkdir(folder)
@@ -73,11 +76,11 @@ def init():
 		else:
 			print "\t%s already exists here." % folder
 			alreadyexists += 1
-	if foldersmade == 0 and alreadyexists == 2:
+	if foldersmade == 0 and alreadyexists == totalneededfolders:
 		print "This directory appears to be ready already. Already!"
 	elif foldersmade == 0 and alreadyexists == 0:
 		print "Init failed to create any folders. Try again with sudo."
-	elif foldersmade == 2:
+	elif foldersmade == totalneededfolders:
 		print "Directory is ready!"
 	else:
 		print """Well, it's hard to say, this directory MIGHT be ready.
@@ -103,6 +106,7 @@ def oops(userdata=None):
 	pyfml.py file_name		-- read an XML file; or
 	pyfml.py init			-- prepare this directory for work."""
 	end()
+	
 
 if __name__ == "__main__":
 	print

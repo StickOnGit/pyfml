@@ -69,6 +69,7 @@ from pprint import pprint as pp
 
 FMLFOLDER = 'fml'
 FMLFILE = 'test.fml'
+IMGFOLDER = 'images'
 
 def read_xml(xmlpath):
 	"""Loads XML from stated path."""
@@ -113,7 +114,9 @@ def new_elem_from_xml(xmlelement):
 	except KeyError:
 		##log to Terminal and add 'error' label element
 		##should probably catch all errors and report after form forming is complete
-		print ("There's no <%s> element in FML.\nAvailable elements are: \n%s\n" % (elemType,''.join(['\n\t%s' % x for x in _elemdict.keys()])))
+		print """There's no <%s> element in FML.
+		Available elements are: \n%s
+		""" % (elemType,''.join(['\n\t%s' % x for x in _elemdict.keys()]))
 		return _elemdict['label'](field_label="**An error occurred here. REMOVE this element and correct.**")
 	elemTextKey = _xmltextlocation[elemType]	##gets k of 'open text'
 	elemTextVal = xmlelement.text				##gets v of 'open text'
@@ -122,7 +125,7 @@ def new_elem_from_xml(xmlelement):
 	for k, v in elemAttrib:
 		elemData += [(k, v)]
 	nestedData = []
-	for item in xmlelement:		##add nested xml to 'parent' element
+	for item in xmlelement:				##add nested xml to 'parent' element
 		nestedData += [(item.tag, item.text)]
 		nestedAttrib = item.attrib.items()
 		for k, v in nestedAttrib:
@@ -133,21 +136,22 @@ def new_elem_from_xml(xmlelement):
 		v = tidy_up(v)					##cleans up strings
 		newElem[k] = v
 	if 'imageObjData' in newElem:
-		try:
-			newElem['imageObjData'] = img_path_to_base64(newElem['imageObjData'])
-			newElem['attached_file_id'] = -1
-		except IOError:
-			sectName = newSection['iform_section']['section_name']
-			print "No image or bad path for drawing element in %s." % (sectName)
-			newElem['imageObjData'] = None
+		newElem['imageObjData'] = img_path_to_base64(newElem['imageObjData'])
 	return newElem
 	
 def img_path_to_base64(imageobjdatapath):
 	"""Turns a relative path into a base64 encoded image.
 	
 	Should be called after the FML element is translated into a dict."""
-	with open(imageobjdatapath, "rb") as f:
-		dataToTranslate = f.read()
+	pathinfolder = OS.path.join(IMGFOLDER, imageobjdatapath)
+	try:
+		with open(pathinfolder, "rb") as f:
+		#try:
+			dataToTranslate = f.read()
+	except IOError:
+		print "Bad path: " % pathinfolder
+		return None
+	else:
 		return PLIB.Data(dataToTranslate)
 
 def xml_to_dict(xmlform):
