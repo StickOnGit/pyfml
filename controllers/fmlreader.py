@@ -67,9 +67,13 @@ from boxdict import _boxtypes
 from fmltodict import _xmltranslate, _elemdict, _xmltextlocation
 from pprint import pprint as pp
 
+##these, along with the defaults in pyfml.py, should be in a separate file in a dict
 FMLFOLDER = 'fml'
 FMLFILE = 'test.fml'
 IMGFOLDER = 'images'
+
+##return this on element creation fail
+_BADELEMENT = _elemdict['label'](field_label="**An error occurred here. REMOVE this element and correct.**")
 
 def read_xml(xmlpath):
 	"""Loads XML from stated path."""
@@ -114,10 +118,10 @@ def new_elem_from_xml(xmlelement):
 	except KeyError:
 		##log to Terminal and add 'error' label element
 		##should probably catch all errors and report after form forming is complete
-		print """There's no <%s> element in FML.
-		Available elements are: \n%s
+		print """There's no <%s> element in FML. Available elements are: \n%s
 		""" % (elemType,''.join(['\n\t%s' % x for x in _elemdict.keys()]))
-		return _elemdict['label'](field_label="**An error occurred here. REMOVE this element and correct.**")
+		#return _elemdict['label'](field_label="**An error occurred here. REMOVE this element and correct.**")
+		return _BADELEMENT
 	elemTextKey = _xmltextlocation[elemType]	##gets k of 'open text'
 	elemTextVal = xmlelement.text				##gets v of 'open text'
 	elemAttrib = xmlelement.attrib.items()		##attributes as list of tuples
