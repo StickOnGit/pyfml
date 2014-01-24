@@ -88,9 +88,9 @@ def new_shell_from_xml(xmlobj):
 def new_section_from_xml(xmlsection):
 	"""Returns a section populated with translated FML values."""
 	newSectionOuter = BP.make_new_section_outer()
-	if xmlsection.tag in _boxtypes:
+	if xmlsection.tag in _boxtypes:		#catch hardcoded sections
 		newSectionOuter['mp_box_type'] = _boxtypes[xmlsection.tag]
-		del newSectionOuter['iform_section']
+		del newSectionOuter['iform_section']	#not needed with hardcoded sections
 		return newSectionOuter
 	else:
 		pass
@@ -112,6 +112,7 @@ def new_elem_from_xml(xmlelement):
 		newElem = _elemdict[elemType]()			##new blank element of elemType
 	except KeyError:
 		##log to Terminal and add 'error' label element
+		##should probably catch all errors and report after form forming is complete
 		print ("There's no <%s> element in FML.\nAvailable elements are: \n%s\n" % (elemType,''.join(['\n\t%s' % x for x in _elemdict.keys()])))
 		return _elemdict['label'](field_label="**An error occurred here. REMOVE this element and correct.**")
 	elemTextKey = _xmltextlocation[elemType]	##gets k of 'open text'
@@ -160,9 +161,6 @@ def xml_to_dict(xmlform):
 			newElem = new_elem_from_xml(element)
 			FE.add_elem_to_section(newElem, newSection)
 		FE.add_section_to_form(newSection, newForm)
-	#ROF.set_order_num(newForm)		##this eventually goes elsewhere
-	#ROF.set_field_ids(newForm)		##	"		"		"		"
-	#ROF.set_narrative(newForm)		##	"		"		"		"
 	return newForm
 
 def tidy_up(somexml):
