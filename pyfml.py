@@ -1,3 +1,5 @@
+#! /usr/bin/env python
+
 """The command line interface for pyFML.
 
 Type pyfml.py my_file to read a file and convert it to .itpl."""
