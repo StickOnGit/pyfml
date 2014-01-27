@@ -23,8 +23,9 @@ def make_new_element(field_label="_default",
 			"is_required":is_required,"order_num":order_num, 
 			"string_format_type":string_format_type}
 			
-def make_new_section_inner(iformFieldsArray=None, pull_preference=0, section_name="_default"):
-	"""Returns the innermost part of a section. Typically don't call this by itself."""
+def make_new_section_inner(iformFieldsArray=None, pull_preference=2, section_name="_default"):
+	"""Returns the innermost part of a section. Typically don't call this by itself.
+	Sets pull_preference to 2 as a default."""
 	if iformFieldsArray is None:
 		iformFieldsArray = []
 	
@@ -40,9 +41,9 @@ def make_new_section_outer(iform_section=None, order_num=0):
 	return {"iform_section":iform_section, "order_num":order_num}
 	
 def make_new_section(iform_section=None, order_num=0, 
-					iformFieldsArray=None, pull_preference=1, section_name="_default"):
+					iformFieldsArray=None, pull_preference=2, section_name="_default"):
 	"""Returns a whole iEHR form section.
-	Note that this function defaults pull_preference to 1."""
+	Note that this function defaults pull_preference to 2."""
 	
 	newInner = make_new_section_inner(iformFieldsArray=iformFieldsArray,
 										pull_preference=pull_preference, 

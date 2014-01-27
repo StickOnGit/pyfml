@@ -120,17 +120,21 @@ def new_elem_from_xml(xmlelement):
 		##should probably catch all errors and report after form forming is complete
 		print """There's no <%s> element in FML. Available elements are: \n%s
 		""" % (elemType,''.join(['\n\t%s' % x for x in _elemdict.keys()]))
-		#return _elemdict['label'](field_label="**An error occurred here. REMOVE this element and correct.**")
 		return _BADELEMENT
-	elemTextKey = _xmltextlocation[elemType]	##gets k of 'open text'
-	elemTextVal = xmlelement.text				##gets v of 'open text'
+	elemTextKey = _xmltextlocation[elemType]	##gets key of 'open text'
+	##next line gets value of 'open text', or sets to '' if None.
+	##this allows for void elements such as <label /> or simply
+	##elements with no field_label. also, python ternary <3 <3
+	##read as -- elem TextVal = xmlelem.text == None ? '' : xmlelem.text
+	elemTextVal = xmlelement.text if xmlelement.text is not None else ''
 	elemAttrib = xmlelement.attrib.items()		##attributes as list of tuples
 	elemData = [(elemTextKey, elemTextVal)]
 	for k, v in elemAttrib:
 		elemData += [(k, v)]
 	nestedData = []
 	for item in xmlelement:				##add nested xml to 'parent' element
-		nestedData += [(item.tag, item.text)]
+		## <3
+		nestedData += [(item.tag, item.text if item.text is not None else '')]
 		nestedAttrib = item.attrib.items()
 		for k, v in nestedAttrib:
 			nestedData += [(k, v)]
@@ -140,6 +144,8 @@ def new_elem_from_xml(xmlelement):
 		v = tidy_up(v)					##cleans up strings
 		newElem[k] = v
 	if 'imageObjData' in newElem:
+		##encodes images if present
+		##apparently this works for future builds but not current?? O_o
 		newElem['imageObjData'] = img_path_to_base64(newElem['imageObjData'])
 	return newElem
 	

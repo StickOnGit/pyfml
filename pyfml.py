@@ -53,9 +53,9 @@ def save_itpl(savefile):
 		dups += 1
 	try:
 		PLIB.writePlist(savefile, savepath)
-	except IOError as err:
-		print "\tCouldn't save %s. Apparently, %s" % (finalname, err.strerror)
-		print "path was %s" % savepath
+	except (TypeError, IOError) as err:
+		print "\tCouldn't save %s. Apparently, %s" % (finalname, err)
+		print "\tCheck '%s' to see if there's a partial save file: \n\tthis may help you see which element or section pyFML choked on." % savepath
 		end()
 	else:
 		print "\nSaved '%s' to '%s'." % (finalname, savepath)

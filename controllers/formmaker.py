@@ -11,5 +11,4 @@ def make_new_form():
 	newSection = BP.make_new_section(section_name="New Section")
 
 	newForm['iformSectionTiesArray'].append(newSection)
-	#ROF.fix_all_orders(newForm)
 	return newForm

@@ -76,3 +76,29 @@ def set_narrative(pyform):
 				section['iform_section']['narrative_string'] = narrString
 			else:
 				pass
+
+def build_list_header(element):
+	"""Create a list_header based on existing data and defaults."""
+	skip_list = [10, 12]
+	try:
+		elemID = element['iform_field_type_id']
+	except KeyError:
+		print "Some element doesn't have an ID. Can't give it a narrative."
+		return None
+	if elemID not in skip_list:		##Handle these later yo
+		try:
+			narrText = element['field_label']
+			narrTag = 'div'	##need a lookup for this, that's why it's here
+		except KeyError:
+			narrText = ''
+			narrTag = 'div'
+		else:
+			while not narrText[-1].isalphanum():
+				narrText = narrText[:-1]
+				if not narrText:
+					narrText = 'REPLACE THIS VALUE'
+			
+		listString = "<%s><b>%s: </b>" % (narrTag, narrText)
+		element['list_header'] = listString
+	else: ##...finish this later, this is for non-catchall elements
+		pass
