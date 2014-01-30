@@ -7,33 +7,6 @@ for these terms as tags, attributes, and as children elements of the parent. It
 compares these terms to the correct dictionary for the element and replaces the
 FML word with the accepted .itpl word.
 
-Forms and sections have a strict-ish syntax expectation. They primarily
-use attributes to describe preferences and child elements to describe
-content. Form and section titles are a little different and can be either-or.
-
-As an example: 
-<iEHR>Dr. Mario's Form</iehr>
-
-This COULD also be written as follows:
-
-<iEHR name="Dr. Mario's Form"></iEHR>
-
-However, preferences such as 'archived' and 'available to clipboard' will only
-be looked for as attributes. Example:
-
-<iEHR archived='0'>Dr. Mario's Form</iEHR>
-
-Sections (boxes) receive similar treatment -- names will be looked for in
-either location, but data that acts as a preference is preferred to live
-as an attribute.
-
-Elements are less picky. A good example is a list element. in FML it looks like this:
-
-<menu req='1'>Menu Title Here
-	<list edit='1'>Foo##Bar##Baz##Eggs##Spam</list>
-	<sublist>One##Two##Three##Four</sublist>
-</menu>
-
 This script will 'flatten' the above into the correct .plist format, and will
 apply the attributes of the children to the parent, just like the .itpl file.
 it will turn "edit='1'" into "<key>dynamic_list</key><integer>1</integer>" and
@@ -41,16 +14,8 @@ add it to the parent element.
 
 Currently, it is not as recursive as it maybe could be, so only one layer of
 nesting children is supported. also, it doesn't really care whether the
-values are attributes or child elements, so if one *really* wanted to
-one could create a list like this:
-
-<menu list="Foo##Bar##Baz##Eggs##Spam">Menu Title Here
-	<req>1</req>
-</menu>
-
-So it's not a strict syntax, and the use of attributes over elements is really
-sort of up to the Form Former. However, I do strongly recommend a style wherein
-'content' is in elements and 'preferences' are attributes.
+values are attributes or child elements. This is by design, especially since
+at present the syntax and styling are all very young.
 
 Many values have defaults and do not need to be explicitly entered, but can be
 easily overridden if they are present in the FML file. Order_num is determined
@@ -86,7 +51,7 @@ def new_shell_from_xml(xmlobj):
 	for k, v in xmlobj.attrib.iteritems():
 		newShell[k] = v
 	maybetitle = tidy_up(xmlobj.text)
-	if len(maybetitle) > 0:
+	if maybetitle:
 		newShell['template_name'] = maybetitle
 	return newShell
 
@@ -104,28 +69,38 @@ def new_section_from_xml(xmlsection):
 		if k is not 'order_num':
 			newSectionInner[k] = v
 	maybetitle = tidy_up(xmlsection.text)
-	if len(maybetitle) > 0:
+	if maybetitle:
 		newSectionInner['section_name'] = maybetitle
 	newSectionOuter['iform_section'] = newSectionInner
 	return newSectionOuter
 
 def new_elem_from_xml(xmlelement):
 	"""Returns an element populated with translated FML values."""
-	try:
-		elemType = xmlelement.tag
-		translator = _xmltranslate[elemType]	##gets right function for next line
-		newElem = _elemdict[elemType]()			##new blank element of elemType
-	except KeyError:
-		##log to Terminal and add 'error' label element
-		##should probably catch all errors and report after form forming is complete
+	#try:
+	#	elemType = xmlelement.tag
+	#	translator = _xmltranslate[elemType]	##gets right function for next line
+	#	newElem = _elemdict[elemType]()			##new blank element of elemType
+	#except KeyError:
+	#	##log to Terminal and add 'error' label element
+	#	##should probably catch all errors and report after form forming is complete
+	#	print """There's no <%s> element in FML. Available elements are: \n%s
+	#	""" % (elemType,''.join(['\n\t%s' % x for x in _elemdict.keys()]))
+	#	return _BADELEMENT
+	#elemTextKey = _xmltextlocation[elemType]	##gets key of 'open text'
+	elemType = xmlelement.tag
+	translator = _xmltranslate.get(elemType, None)
+	elem_method = _elemdict.get(elemType, None)
+	if translator is None or elem_method is None:
 		print """There's no <%s> element in FML. Available elements are: \n%s
 		""" % (elemType,''.join(['\n\t%s' % x for x in _elemdict.keys()]))
 		return _BADELEMENT
-	elemTextKey = _xmltextlocation[elemType]	##gets key of 'open text'
+	else:
+		newElem = elem_method()
+	elemTextKey = _xmltextlocation.get(elemType, 'field_label')	##gets key of 'open text'
 	##next line gets value of 'open text', or sets to '' if None.
 	##this allows for void elements such as <label /> or simply
 	##elements with no field_label. also, python ternary <3 <3
-	##read as -- elem TextVal = xmlelem.text == None ? '' : xmlelem.text
+	##read as -> elemTextVal = xmlelem.text == None ? '' : xmlelem.text
 	elemTextVal = xmlelement.text if xmlelement.text is not None else ''
 	elemAttrib = xmlelement.attrib.items()		##attributes as list of tuples
 	elemData = [(elemTextKey, elemTextVal)]
@@ -156,7 +131,6 @@ def img_path_to_base64(imageobjdatapath):
 	pathinfolder = OS.path.join(IMGFOLDER, imageobjdatapath)
 	try:
 		with open(pathinfolder, "rb") as f:
-		#try:
 			dataToTranslate = f.read()
 	except IOError:
 		print "Bad path: " % pathinfolder
@@ -199,6 +173,14 @@ def test(filepath=FMLFILE):
 	newpath = OS.path.join(FMLFOLDER, filepath)
 	xmlF = read_xml(newpath)
 	newF = xml_to_dict(xmlF)
+	return newF
+
+def bigtest():
+	"""In case one needs to work with a 'finished' form in the Python interpreter."""
+	newF = test()
+	ROF.set_order_num(newF)
+	ROF.set_field_ids(newF)
+	ROF.set_narrative(newF)
 	return newF
 	
 def quicktest():

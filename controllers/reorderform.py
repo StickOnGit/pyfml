@@ -1,10 +1,12 @@
 #! /usr/bin/env python
-"""Used to automate the process of assigning order_num to XML-created objects.
-
-Since the goal of FML is to reduce time and keystrokes, it determines order_num
-by simply reading the document tree and assigning order_num in the order of
-elements found. It does likewise with sections.
+"""Gets an FML-based dict ready to be saved as a plist.
+Automatically assigns order_num, field_id, narrative_strings,
+and HTML tags for correct display on the narrative.
 """
+
+from narrativedicts import _outertags, _innertags, _presuftag, _sublisttags, _checkunchecktags
+
+
 def correct_order(somelist):
 	"""Sets the order_num for a list of items, in the order it sees them. Begins at 1.
 	Does not increment or add an order_num to a dict if it isn't already present."""
@@ -72,33 +74,69 @@ def set_narrative(pyform):
 					narrString += insertStr
 				else:
 					pass
+				#auto_tag(element)
+				auto_tag(element)
 			if narrString:
 				section['iform_section']['narrative_string'] = narrString
 			else:
 				pass
 
-def build_list_header(element):
-	"""Create a list_header based on existing data and defaults."""
-	skip_list = [10, 12]
-	try:
-		elemID = element['iform_field_type_id']
-	except KeyError:
-		print "Some element doesn't have an ID. Can't give it a narrative."
-		return None
-	if elemID not in skip_list:		##Handle these later yo
-		try:
-			narrText = element['field_label']
-			narrTag = 'div'	##need a lookup for this, that's why it's here
-		except KeyError:
-			narrText = ''
-			narrTag = 'div'
-		else:
-			while not narrText[-1].isalphanum():
-				narrText = narrText[:-1]
-				if not narrText:
-					narrText = 'REPLACE THIS VALUE'
-			
-		listString = "<%s><b>%s: </b>" % (narrTag, narrText)
-		element['list_header'] = listString
-	else: ##...finish this later, this is for non-catchall elements
-		pass
+def label_to_narrative(string):
+	"""Tries to ensure a string is ready to become a list_header string.
+	Removes whitespace from front and back (if any) and looks for the
+	last character. If that character is NOT an alphanumeric character,
+	it's deleted. It stops when it finds an alphanumeric character, and
+	adds a colon.
+	
+	TLDR?
+	
+	Changes ' How Did This Happen?!' to 'How Did This Happen:'"""
+	string = string.strip()		##zap leading/trailing whitespace
+	newString = string
+	while newString and not newString[-1].isalnum():	##remove non-alphanumeric
+		newString = newString[:-1]		##chars from end
+	if not newString:			##oops, couldn't work with it;
+		return string			##return old string minus whitespace
+	else:
+		return "%s: " % newString
+	
+
+def auto_tag(element):
+	"""Uses reference dicts (imported) to assign basic HTML tags to
+	the sections of elements which would appear on the narrative."""
+	newdata = {}
+	elemID = element.get('iform_field_type_id', None)
+	headnarrative = ''
+	footnarrative = ''
+	listheadtext = label_to_narrative(element.get('field_label', ''))
+	if listheadtext:
+		headnarrative = "<b>%s</b>" % listheadtext
+	outsidetag = _outertags.get(elemID, None)
+	if outsidetag is not None:
+		headnarrative = "<%s>%s" % (outsidetag, headnarrative)
+		footnarrative = "</%s>" % outsidetag
+	insidetag = _innertags.get(elemID, None)
+	if insidetag is not None:
+		headnarrative = "%s<%s>" % (headnarrative, insidetag)
+		footnarrative = "</%s>%s" % (insidetag, footnarrative)
+	if outsidetag is not None or insidetag is not None:
+		if headnarrative:
+			newdata['list_header'] = headnarrative
+		if footnarrative:
+			newdata['list_footer'] = footnarrative
+	checkunchecktag = _checkunchecktags.get(elemID, None)
+	if checkunchecktag is not None:
+		currentchecked = element.get('checked_narrative', '')
+		currentunchecked = element.get('unchecked_narrative', '')
+		newdata['checked_narrative'] = "<%s>%s</%s>" % (checkunchecktag, currentchecked, checkunchecktag)
+		newdata['unchecked_narrative'] = "<%s>%s</%s>" % (checkunchecktag, currentunchecked, checkunchecktag)
+	listtag = _presuftag.get(elemID, None)
+	if listtag is not None:
+		newdata['list_prefix'] = "<%s>" % listtag
+		newdata['list_suffix'] = "</%s>" % listtag
+	sublisttag = _sublisttags.get(elemID, None)
+	if sublisttag is not None:
+		newdata['sublist_prefix'] = "<%s>" % sublisttag
+		newdata['sublist_suffix'] = "</%s>" % sublisttag
+	for k, v in newdata.iteritems():
+		element[k] = unicode(v)
