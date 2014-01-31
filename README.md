@@ -1,5 +1,12 @@
-makes for a quick templating job when taking your first run at form forming.
+PyFML
+=========
 
-in this very early version there are outstanding issues, namely that there are no attempts made at generating unique ids for any part of the form. because of this, the initial file it generates could potentially be used to create new instances of the form by just re-re-re-re-reimporting it. for that reason the file should be imported first, then confirmed for functionality, then export the confirmed functional version of the form and leave the other one alooooone.
+very fast form creation, works with your favorite text editor
 
-eventual goal is to load the actual file and create an XML/FML doc from it which can be edited without losing those sweet delicious uuids. in this way an existing form file could be edited and then re-imported without breaking data ties.
+Changelog
+=========
+
+01/31/14
+
+	-- Cleaned out a bunch of poor logic in reorderform.py. dict.get() ruling the world. Language features are good for the line count, it seems.
+	-- Generates basic narrative now. Does not apply styling (yet). Not because it would be hard to implement (it wouldn't), but because the style-guide is still up in the air and there are future features being hinted at which may land such a feature somewhere between superfluous and detrimental.
