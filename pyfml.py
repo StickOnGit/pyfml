@@ -8,7 +8,7 @@ import sys
 import os
 import plistlib as PLIB
 from controllers.fmlreader import xml_to_dict, read_xml
-from controllers.reorderform import set_order_num, set_field_ids, set_narrative
+from controllers.reorderform import setup_form
 
 _FMLFOLDER = 'fml'
 _ITPLFOLDER = 'itpl'
@@ -93,11 +93,9 @@ def init():
 def convert_to_itpl(xmlform):
 	"""Returns a plist which is the converted FML file.
 	Sets the order_nums, iform_field_ids, and creates narrative_strings."""
-	formdict = xml_to_dict(xmlform)
-	set_order_num(formdict)
-	set_field_ids(formdict)
-	set_narrative(formdict)
-	return formdict
+	pyform = xml_to_dict(xmlform)
+	setup_form(pyform)
+	return pyform
 
 def oops(userdata=None):
 	if not userdata:
@@ -116,7 +114,6 @@ if __name__ == "__main__":
 		flag = sys.argv[1]
 	except IndexError:
 		oops()
-		end()
 	else:
 		if flag == 'init':
 			init()

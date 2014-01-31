@@ -7,80 +7,42 @@ and HTML tags for correct display on the narrative.
 from narrativedicts import _outertags, _innertags, _presuftag, _sublisttags, _checkunchecktags
 
 
-def correct_order(somelist):
-	"""Sets the order_num for a list of items, in the order it sees them. Begins at 1.
-	Does not increment or add an order_num to a dict if it isn't already present."""
-	currentcount = 1
-	for item in range(len(somelist)):
-		if 'order_num' in somelist[item]:
-			somelist[item]['order_num'] = currentcount
-			currentcount += 1
-		else:
-			pass
+def new_set_order(pyform):
+	sectioncount = 0
+	for section in pyform.get('iformSectionTiesArray', []):
+		sectioncount += 1
+		section['order_num'] = sectioncount
+		elementcount = 0
+		for element in section.get('iform_section', {}).get('iformFieldsArray', []):
+			elementcount += 1
+			element['order_num']  = elementcount
 
-def set_order_num(pyform):
-	"""Sets the order_num of each element and section for a form dict."""
-	try:
-		correct_order(pyform['iformSectionTiesArray'])
-	except KeyError:
-		raise KeyError("fix_all_orders did not find iformSectionTiesArray.")
-	unfixed_sections = 0
-	number_of_sections = len(pyform['iformSectionTiesArray'])
-	if number_of_sections == 0:
-		return "No sections to fix."
-	for section in pyform['iformSectionTiesArray']:
-		try:
-			correct_order(section['iform_section']['iformFieldsArray'])
-		except KeyError:
-			unfixed_sections += 1
-	if unfixed_sections == 0:
-		return "Confirmed order of elements in {fixed} of {notfixed} sections".format(
-			fixed=number_of_sections - unfixed_sections,
-			notfixed=number_of_sections
-		)
-	elif unfixed_sections < number_of_sections:
-		return "Found at least one section, but not every section had elements to reorder."
-	elif unfixed_sections == number_of_sections:
-		return "Did not fix any element order_num within sections."
-		
-def set_field_ids(pyform, fieldID=-1):
-	"""Sets incremental negative iform_field_ids.
-	Can take optional fieldID argument. Apparently field_id is always
-	negative in the .plist so if the argument is positive, it will
-	use the additive inverse instead. (yes, i googled that word)"""
-	try:
-		fieldID = int(fieldID)
-		if fieldID > 0:
-			fieldID *= -1
-	except:	##why bother specifying TypeError and ValueError, who cares
-		print "field_id should be a number, preferably negative."
-		fieldID = -1
-	for section in pyform['iformSectionTiesArray']:
-		try:
-			for element in section['iform_section']['iformFieldsArray']:
-				element['iform_field_id'] = fieldID
-				fieldID -= 1
-		except KeyError:
-			pass
+def new_set_ids(pyform):			
+	fieldID = -1
+	for section in pyform.get('iformSectionTiesArray', []):
+		for element in section.get('iform_section', {}).get('iformFieldsArray', []):
+			element['iform_field_id'] = fieldID
+			fieldID -= 1
 			
-def set_narrative(pyform):
-	"""Automatically creates a basic narrative string."""
-	for section in pyform['iformSectionTiesArray']:
-		narrString = ''
-		if 'iform_section' in section:
-			for element in section['iform_section']['iformFieldsArray']:
-				if 'iform_field_id' in element:
-					insertStr = "{{%d.%s}}" % (element['iform_field_id'], element['field_label'])
-					narrString += insertStr
-				else:
-					pass
-				#auto_tag(element)
-				auto_tag(element)
-			if narrString:
-				section['iform_section']['narrative_string'] = narrString
-			else:
-				pass
-
+def new_set_nar(pyform):
+	"""Creates narrative string.
+	
+	This function is more verbose than the previous one but is
+	better at handling an absence of sections/inner sections/elements."""
+	for section in pyform.get('iformSectionTiesArray', []):
+		autoString = u''
+		for element in section.get('iform_section',{}).get('iformFieldsArray', []):
+			fieldID = element.get('iform_field_id', False)
+			fieldLabel = element.get('field_label', '')
+			if fieldID is not False:
+				autoString = "%s{{%d.%s}}" % (autoString, fieldID, fieldLabel)
+			else: pass
+			auto_tag(element)
+			if autoString:
+				section['iform_section']['narrative_string'] = autoString
+			else: pass
+	else: pass
+				
 def label_to_narrative(string):
 	"""Tries to ensure a string is ready to become a list_header string.
 	Removes whitespace from front and back (if any) and looks for the
@@ -93,14 +55,13 @@ def label_to_narrative(string):
 	Changes ' How Did This Happen?!' to 'How Did This Happen:'"""
 	string = string.strip()		##zap leading/trailing whitespace
 	newString = string
-	while newString and not newString[-1].isalnum():	##remove non-alphanumeric
-		newString = newString[:-1]		##chars from end
-	if not newString:			##oops, couldn't work with it;
-		return string			##return old string minus whitespace
+	while newString and not newString[-1].isalnum():	##remove non-alphanum
+		newString = newString[:-1]						##chars from end
+	if not newString:			##if somehow the whole string was deleted
+		return string			##return old string (minus whitespace)
 	else:
 		return "%s: " % newString
 	
-
 def auto_tag(element):
 	"""Uses reference dicts (imported) to assign basic HTML tags to
 	the sections of elements which would appear on the narrative."""
@@ -138,5 +99,15 @@ def auto_tag(element):
 	if sublisttag is not None:
 		newdata['sublist_prefix'] = "<%s>" % sublisttag
 		newdata['sublist_suffix'] = "</%s>" % sublisttag
-	for k, v in newdata.iteritems():
-		element[k] = unicode(v)
+	if newdata:
+		for k, v in newdata.iteritems():
+			element[k] = unicode(v)
+	else: pass
+
+def setup_form(pyform):
+	"""The one function to bind them all.
+	Calls the current implementation functions which set order_num,
+	field_ids, and data pertaining to the narrative."""
+	new_set_order(pyform)
+	new_set_ids(pyform)
+	new_set_nar(pyform)
