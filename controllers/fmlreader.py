@@ -58,35 +58,23 @@ def new_shell_from_xml(xmlobj):
 def new_section_from_xml(xmlsection):
 	"""Returns a section populated with translated FML values."""
 	newSectionOuter = BP.make_new_section_outer()
-	if xmlsection.tag in _boxtypes:		#catch hardcoded sections
-		newSectionOuter['mp_box_type'] = _boxtypes[xmlsection.tag]
-		del newSectionOuter['iform_section']	#not needed with hardcoded sections
-		return newSectionOuter
+	boxType = _boxtypes.get(xmlsection.tag, False)
+	if boxType is not False:
+		newSectionOuter['mp_box_type'] = boxType
+		del newSectionOuter['iform_section']
 	else:
-		pass
-	newSectionInner = BP.make_new_section_inner()
-	for k, v in xmlsection.attrib.iteritems():
-		if k is not 'order_num':
-			newSectionInner[k] = v
-	maybetitle = tidy_up(xmlsection.text)
-	if maybetitle:
-		newSectionInner['section_name'] = maybetitle
-	newSectionOuter['iform_section'] = newSectionInner
+		newSectionInner = BP.make_new_section_inner()
+		for k, v in xmlsection.attrib.iteritems():
+			if k is not 'order_num':
+				newSectionInner[k] = v
+		maybetitle = tidy_up(xmlsection.text)
+		if maybetitle:
+			newSectionInner['section_name'] = maybetitle
+		newSectionOuter['iform_section'] = newSectionInner
 	return newSectionOuter
 
 def new_elem_from_xml(xmlelement):
 	"""Returns an element populated with translated FML values."""
-	#try:
-	#	elemType = xmlelement.tag
-	#	translator = _xmltranslate[elemType]	##gets right function for next line
-	#	newElem = _elemdict[elemType]()			##new blank element of elemType
-	#except KeyError:
-	#	##log to Terminal and add 'error' label element
-	#	##should probably catch all errors and report after form forming is complete
-	#	print """There's no <%s> element in FML. Available elements are: \n%s
-	#	""" % (elemType,''.join(['\n\t%s' % x for x in _elemdict.keys()]))
-	#	return _BADELEMENT
-	#elemTextKey = _xmltextlocation[elemType]	##gets key of 'open text'
 	elemType = xmlelement.tag
 	translator = _xmltranslate.get(elemType, None)
 	elem_method = _elemdict.get(elemType, None)
@@ -96,11 +84,14 @@ def new_elem_from_xml(xmlelement):
 		return _BADELEMENT
 	else:
 		newElem = elem_method()
-	elemTextKey = _xmltextlocation.get(elemType, 'field_label')	##gets key of 'open text'
+		
+	elemTextKey = _xmltextlocation.get(elemType, 'field_label')
+	
 	##next line gets value of 'open text', or sets to '' if None.
 	##this allows for void elements such as <label /> or simply
 	##elements with no field_label. also, python ternary <3 <3
 	##read as -> elemTextVal = xmlelem.text == None ? '' : xmlelem.text
+	
 	elemTextVal = xmlelement.text if xmlelement.text is not None else ''
 	elemAttrib = xmlelement.attrib.items()		##attributes as list of tuples
 	elemData = [(elemTextKey, elemTextVal)]
