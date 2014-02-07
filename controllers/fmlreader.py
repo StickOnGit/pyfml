@@ -112,6 +112,8 @@ def new_elem_from_xml(xmlelement):
 	if 'imageObjData' in newElem:
 		##encodes images if present
 		##apparently this works for future builds but not current?? O_o
+		##
+		##
 		newElem['imageObjData'] = img_path_to_base64(newElem['imageObjData'])
 	return newElem
 	
@@ -119,13 +121,17 @@ def img_path_to_base64(imageobjdatapath):
 	"""Turns a relative path into a base64 encoded image.
 	
 	Should be called after the FML element is translated into a dict."""
-	pathinfolder = OS.path.join(IMGFOLDER, imageobjdatapath)
 	try:
+		pathinfolder = OS.path.join(IMGFOLDER, imageobjdatapath)
 		with open(pathinfolder, "rb") as f:
 			dataToTranslate = f.read()
 	except IOError:
 		print "Bad path: " % pathinfolder
 		return None
+	except AttributeError:
+		if isinstance(imageobjdatapath, PLIB.Data):
+			print "Already has binary data -- no need to load!"
+			return imageobjdatapath
 	else:
 		return PLIB.Data(dataToTranslate)
 

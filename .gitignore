@@ -8,6 +8,7 @@
 *.jpeg
 *.png
 *.tiff
+*.fml
 .DS_Store
 testdata/
 fml/

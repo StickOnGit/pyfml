@@ -53,7 +53,10 @@ def label_to_narrative(string):
 	TLDR?
 	
 	Changes ' How Did This Happen?!' to 'How Did This Happen:'"""
-	string = string.strip()		##zap leading/trailing whitespace
+	try:
+		string = string.strip()		##zap leading/trailing whitespace
+	except AttributeError:
+		return string
 	newString = string
 	while newString and not newString[-1].isalnum():	##remove non-alphanum
 		newString = newString[:-1]						##chars from end

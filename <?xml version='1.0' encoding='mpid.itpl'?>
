@@ -1,0 +1,35 @@
+<iEHR>LW Chiro SOAP<box>Header<block hide_from_clipboard="0" is_required="0" multiple_selection="0" sub_view_dynamic="0" sub_view_type="0">header<checked_narrative>&lt;style&gt;
+#LWSheader {
+	text-align:center;
+}
+h4, h5 {
+	font-weight:normal;
+	margin:0;
+}
+
+h5 {
+	margin:0 3em;
+	display:inline;
+}
+&lt;/style&gt;
+&lt;div id="LWSheader"&gt;
+&lt;h2&gt;&lt;em&gt;Tiffany Renaud, Inc. / Living Well Spinal Care Center&lt;/em&gt;&lt;/h2&gt;
+&lt;h4&gt;3000 Williston Rd., Suite 3&lt;/h4&gt;
+&lt;h4&gt;So Burlington, VT 05403&lt;/h4&gt;
+    &lt;h5&gt;802-658-6092&lt;/h5&gt;&lt;h5&gt;802-863-9565&lt;/h5&gt;
+&lt;/div&gt;</checked_narrative></block></box><box>General Comments<textbox hide_from_clipboard="0" is_required="0" multiple_selection="0" sub_view_dynamic="0" sub_view_type="0">Enter notes here:</textbox></box><box>Default Section Name</box><box>Default Section Name</box><box>Default Section Name</box><box>Default Section Name</box><box>Default Section Name</box><box>Subjective<textbox hide_from_clipboard="0" is_required="0" multiple_selection="0" sub_view_dynamic="0" sub_view_type="0">Subjective</textbox><popup dynamic_list="1" hide_from_clipboard="0" is_required="0" multiple_selection="0" placeholder_text="Tap to choose one option" sub_view_dynamic="0" sub_view_type="0">Response To Treatment</popup><popup hide_from_clipboard="0" is_required="0" multiple_selection="0" placeholder_text="Tap to choose one option" sub_view_dynamic="0" sub_view_type="0">Change Since Last Visit:<popup_values>Improved
+Worsened
+No Change</popup_values></popup><textbox hide_from_clipboard="0" is_required="0" multiple_selection="0" sub_view_dynamic="0" sub_view_type="0">Additional Comments</textbox></box><box>Symptom 1<menu dynamic_list="1" hide_from_clipboard="0" is_required="0" multiple_selection="1" placeholder_text="What is Your Worst Pain" sub_view_dynamic="0" sub_view_type="2">Chief Complaint: <sub_view_list>Bilateral
+Left
+Right</sub_view_list><popup_values>Ankle Pain
+Arm Pain
+Elbow Pain
+Back Pain
+Chest Pain
+Foot Pain
+Hand Pain
+Hip Pain
+Knee Pain
+Leg Pain
+Shoulder Pain
+Wrist Pain</popup_values></menu><drawing hide_from_clipboard="0" is_required="0" multiple_selection="0" sub_view_dynamic="0" sub_view_type="0">Location of Pain: <imageObjData>
