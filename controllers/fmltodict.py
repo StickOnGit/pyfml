@@ -83,6 +83,10 @@ _xmlblock = {
 	"noclip": "hide_from_clipboard"
 }
 
+_xmlid = {
+	"id": "mp_uuid"
+}
+
 ###
 # these three dicts are dicts of dicts. they are used to reference the correct
 # dict when attempting to translate FML terms to .itpl terms.
@@ -105,7 +109,8 @@ _xmltranslate = {
 	"phone": _xmltextfield,
 	"ssn": _xmltextfield,
 	"zip": _xmltextfield,
-	"date": _xmltextfield
+	"date": _xmltextfield,
+	"id": _xmlid
 }
 _elemdict = {
 	"textfield": _els.make_textfield,
@@ -121,7 +126,8 @@ _elemdict = {
 	"phone": _els.make_phonefield,
 	"ssn": _els.make_ssnfield,
 	"zip": _els.make_zipfield,
-	"date": _els.make_datefield	
+	"date": _els.make_datefield,
+	"id": "id"
 }
 _xmltextlocation = {
 	"textfield": "field_label",

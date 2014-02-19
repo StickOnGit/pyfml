@@ -48,6 +48,9 @@ def read_xml(xmlpath):
 def new_shell_from_xml(xmlobj):
 	"""Returns a form populated with translated FML values."""
 	newShell = BP.make_new_form_shell()
+	maybeid = xmlobj.find('id')
+	if maybeid is not None:
+		xmlobj.attrib['mp_uuid'] = maybeid.attrib.get('mp_uuid', None)
 	for k, v in xmlobj.attrib.iteritems():
 		newShell[k] = v
 	maybetitle = tidy_up(xmlobj.text)
@@ -59,11 +62,16 @@ def new_section_from_xml(xmlsection):
 	"""Returns a section populated with translated FML values."""
 	newSectionOuter = BP.make_new_section_outer()
 	boxType = _boxtypes.get(xmlsection.tag, False)
-	if boxType is not False:
+	if boxType is 'id':
+		return 'id'
+	elif boxType is not False:
 		newSectionOuter['mp_box_type'] = boxType
 		del newSectionOuter['iform_section']
 	else:
 		newSectionInner = BP.make_new_section_inner()
+		maybeid = xmlsection.find('id')
+		if maybeid is not None:
+			xmlsection.attrib['mp_uuid'] = maybeid.attrib.get('mp_uuid', None)
 		for k, v in xmlsection.attrib.iteritems():
 			if k is not 'order_num':
 				newSectionInner[k] = v
@@ -78,9 +86,14 @@ def new_elem_from_xml(xmlelement):
 	elemType = xmlelement.tag
 	translator = _xmltranslate.get(elemType, None)
 	elem_method = _elemdict.get(elemType, None)
-	if translator is None or elem_method is None:
-		print """There's no <%s> element in FML. Available elements are: \n%s
-		""" % (elemType,''.join(['\n\t%s' % x for x in _elemdict.keys()]))
+	if translator is 'id' or elem_method is 'id':
+		#print "found an id, returning id and moving on?"
+		return 'id'
+	elif translator is None or elem_method is None:
+		print "Can't work with %s" % xmlelement.tag
+		print "trans: %s\t method: %s" % (translator, elem_method)
+		#print """There's no <%s> element in FML. Available elements are: \n%s
+		#""" % (elemType,''.join(['\n\t%s' % x for x in _elemdict.keys()]))
 		return _BADELEMENT
 	else:
 		newElem = elem_method()
@@ -108,13 +121,21 @@ def new_elem_from_xml(xmlelement):
 		if k in translator:				##turns fml keys to .plist keys
 			k = translator[k]
 		v = tidy_up(v)					##cleans up strings
-		newElem[k] = v
+		if v:							##if there's anything worth adding
+			newElem[k] = v				##add it. this might blow things up
+	#if 'id' in newElem:
+	#	del newElem['id'] ###OH MAN THIS SUCKS. :( WHAT A LOUSY HACK
 	if 'imageObjData' in newElem:
 		##encodes images if present
 		##apparently this works for future builds but not current?? O_o
 		##
 		##
-		newElem['imageObjData'] = img_path_to_base64(newElem['imageObjData'])
+		maybeimage = img_path_to_base64(newElem['imageObjData'])
+		if maybeimage is not None:
+			newElem['imageObjData'] = maybeimage
+		else:
+			del newElem['imageObjData']
+			print "Unfortunately you'll need to load some drawing image data yourself."
 	return newElem
 	
 def img_path_to_base64(imageobjdatapath):
@@ -126,7 +147,9 @@ def img_path_to_base64(imageobjdatapath):
 		with open(pathinfolder, "rb") as f:
 			dataToTranslate = f.read()
 	except IOError:
-		print "Bad path: " % pathinfolder
+		if not len(pathinfolder) < 50:
+			pathinfolder = str(pathinfolder)[:50] + "...(truncated)"
+		print "Bad path: %s" % pathinfolder
 		return None
 	except AttributeError:
 		if isinstance(imageobjdatapath, PLIB.Data):
@@ -142,10 +165,12 @@ def xml_to_dict(xmlform):
 	newForm = new_shell_from_xml(xmlform)
 	for section in xmlform:
 		newSection = new_section_from_xml(section)
-		for element in section:
-			newElem = new_elem_from_xml(element)
-			FE.add_elem_to_section(newElem, newSection)
-		FE.add_section_to_form(newSection, newForm)
+		if newSection is not 'id':
+			for element in section:
+				newElem = new_elem_from_xml(element)
+				if newElem is not 'id':
+					FE.add_elem_to_section(newElem, newSection)
+			FE.add_section_to_form(newSection, newForm)
 	return newForm
 
 def tidy_up(somexml):
@@ -158,6 +183,8 @@ def tidy_up(somexml):
 		return int(somexml)
 	except:
 		newstr = somexml.strip().replace('##', '\r') ##type \r?!!?!? - jean-luc picard, time's arrow pt 1
+		newstr = newstr.replace(']', '>')
+		newstr = newstr.replace('[', '<')
 		return u'%s' % newstr
 
 

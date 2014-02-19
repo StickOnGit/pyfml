@@ -14,5 +14,6 @@ _boxtypes = {
 	"refer": 17,
 	"sig": 21,
 	"smoke": 2,
-	"vitals": 9
+	"vitals": 9,
+	"id": "id"
 }

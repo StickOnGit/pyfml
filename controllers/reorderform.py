@@ -30,18 +30,17 @@ def new_set_nar(pyform):
 	This function is more verbose than the previous one but is
 	better at handling an absence of sections/inner sections/elements."""
 	for section in pyform.get('iformSectionTiesArray', []):
-		autoString = u''
-		for element in section.get('iform_section',{}).get('iformFieldsArray', []):
-			fieldID = element.get('iform_field_id', False)
-			fieldLabel = element.get('field_label', '')
-			if fieldID is not False:
-				autoString = "%s{{%d.%s}}" % (autoString, fieldID, fieldLabel)
-			else: pass
-			auto_tag(element)
-			if autoString:
-				section['iform_section']['narrative_string'] = autoString
-			else: pass
-	else: pass
+		if section.get('iform_section', {}).get('narrative_string', None) is None:
+			autoString = u''
+			for element in section.get('iform_section',{}).get('iformFieldsArray', []):
+				fieldID = element.get('iform_field_id', False)
+				fieldLabel = element.get('field_label', '')
+				if fieldID is not False:
+					autoString = "%s{{%d.%s}}" % (autoString, fieldID, fieldLabel)
+				else: pass
+				auto_tag(element)
+				if autoString:
+					section['iform_section']['narrative_string'] = autoString
 				
 def label_to_narrative(string):
 	"""Tries to ensure a string is ready to become a list_header string.

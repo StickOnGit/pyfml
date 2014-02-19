@@ -1,6 +1,7 @@
 """With any luck at all, moves plist to xml."""
 import plistlib as PLIB
 import xml.etree.ElementTree as ET
+from boxdict import _boxtypes
 
 _formattrib = ['archived', 'available_to_clipboard']
 _sectionattrib = ['pull_preference']
@@ -22,11 +23,20 @@ _elemtagdict = {1: 'textfield',
 				11: 'seg',
 				12: 'block'}
 				
+_htmldict = {"<":"[", ">":"]"}
+
+_prefabboxes = {}
+for k, v in _boxtypes.iteritems():
+	"""This should reverse the order of key-value pairs in the boxtypes
+	and place them in _prefabboxes."""
+	_prefabboxes[v] = k
+				
 def picky_dict(plistsection, sorter):
+	"""I don't remember why this is here."""
 	returnDict = {}
 	for data in sorter:
 		maybedata = plistsection.get(data, None)
-		if maybedata is not False:
+		if maybedata is not None:
 			maybedata = sorter.get(maybedata)
 			returnDict[data] = maybedata
 	if returnDict:
@@ -53,13 +63,23 @@ def xml_section_from_plist(formshell, sectiondict):
 	"""Creates new section for XML form from loaded itpl data."""
 	newdata = {}
 	newSection = ET.SubElement(formshell.getroot(), 'box')
-	for attr in _sectionattrib:
-		maybedata = sectiondict.get(attr, None)
-		if maybedata is not None:
-			newdata[attr] = maybedata
-	newSection.text = sectiondict.get('iform_section', {}).get('section_name', 'Default Section Name')
-	##turn_into_fml(newdata)
-	newSection.attrib = newdata
+	maybeprefab = sectiondict.get('mp_box_type', None)
+	if maybeprefab is not None:
+		try:
+			maybeprefab = int(maybeprefab)
+		except:
+			raise TypeError("Couldn't change %s box_type to int." % maybeprefab)
+		newSection.tag = _prefabboxes.get(maybeprefab, '**ERROR**')
+		newSection.text = None
+		newSection.attrib = {}
+	else:
+		for attr in _sectionattrib:
+			maybedata = sectiondict.get(attr, None)
+			if maybedata is not None:
+				newdata[attr] = maybedata
+		newSection.text = sectiondict.get('iform_section', {}).get('section_name', 'Default Section Name')
+		##turn_into_fml(newdata)
+		newSection.attrib = newdata
 	return newSection
 	
 def xml_elem_from_plist(parentsection, elemdict):
@@ -90,7 +110,8 @@ def xml_elem_from_plist(parentsection, elemdict):
 	return newElem
 	
 def idtag(xmlsection, formplist):
-	#print "Looking for id in %s" % xmlsection.text
+	"""Looks for an mp_uuid, and if it finds one, creates the id element to
+	append to that element/section/form."""
 	maybeid = formplist.get('mp_uuid', None)
 	if maybeid is not None:
 		newmpid = ET.Element(tag='id', attrib={'mp_uuid': maybeid})
@@ -116,7 +137,8 @@ def plist_to_xml(plistform):
 		sectionid = plistsection.get('iform_section', None)
 		if sectionid is not None:
 			newSection.append(idtag(newSection, sectionid))
-	newForm.getroot().append(idtag(newForm.getroot(), plistform))
+	formRoot = newForm.getroot()
+	formRoot.append(idtag(formRoot, plistform))
 	return newForm
 	
 def dict_val_to_str(somedict):
@@ -136,6 +158,34 @@ def plist_val_to_str(plist):
 		dict_val_to_str(section)
 		for elem in section.get('iform_section', {}).get('iformFieldsArray', []):
 			dict_val_to_str(elem)
+			
+def tag_to_square(formpart, translator):
+	"""Changes all instances of html characters that seem to befuddle
+	ElementTree's ability to parse the plist data.
+	
+	RUN THIS BEFORE PLIST_VAL_TO_STR. It uses type-checking to
+	ensure it is changing values that 'should' be changed. While
+	it probably doesn't break anything to do it the other
+	way around, let's not tempt fate."""
+	for name, content in formpart.items():
+		if isinstance(content, basestring):
+			newString = content
+			for htmlval, newchar in translator.items():
+				#print "looking for %s, changing to %s".format(htmlval, newchar)
+				newString = newString.replace(htmlval, newchar)
+			if newString != content:
+				formpart[name] = newString
+		else: pass
+			
+def plist_escape_html(plist):
+	"""Changes string HTML to a different token.
+	ElementTree chokes on HTML in plist strings, so it's important
+	to do this when going from itpl to FML."""
+	sections = plist.get('iformSectionTiesArray', [])
+	for section in sections:
+		tag_to_square(section, _htmldict)
+		for element in section.get('iform_section', {}).get('iformFieldsArray', []):
+			tag_to_square(element, _htmldict)
 
 	
 def test(file='itpl/LW Chiro SOAP.itpl'):
