@@ -22,13 +22,28 @@ _elemtagdict = {1: 'textfield',
 				10: 'menu',
 				11: 'seg',
 				12: 'block'}
+
+_imgpouch = {}
 				
 _htmldict = {"<":"[", ">":"]"}
 
+_elemattrib = {'is_required': 'req',
+				'hide_from_clipboard': 'noclip', 
+				'dynamic_list': 'edit'}
+				
+_elemchildren = {'checked_narrative':'block', 
+					'unchecked_narrative':'no', 
+					'popup_values':'list', 
+					'sub_view_list': 'sublist',
+					'imageObjData':'img'}
+					
+_badvalues = [None, 0, '0']
+
 _prefabboxes = {}
 for k, v in _boxtypes.iteritems():
-	"""This should reverse the order of key-value pairs in the boxtypes
-	and place them in _prefabboxes."""
+	"""Reverses the order of key-value pairs in the boxtypes
+	and place them in _prefabboxes. Should be in {itpl:xml} order after
+	doing this."""
 	_prefabboxes[v] = k
 				
 def picky_dict(plistsection, sorter):
@@ -89,22 +104,23 @@ def xml_elem_from_plist(parentsection, elemdict):
 	elemTagKey = elemdict.get('iform_field_type_id', 'default_fieldtype_id')
 	elementkind = _elemtagdict.get(int(elemTagKey), 'error')
 	newElem = ET.SubElement(parentsection, elementkind)
-	newElem.text = elemdict.get('field_label', 'Default Element Name')
+	##str() because field_label must always be a string
+	newElem.text = str(elemdict.get('field_label', 'Default Element Name'))
 	for attr in _elemattrib:
+		fmlattr = _elemattrib.get(attr, attr)
 		maybeattr = elemdict.get(attr, None)
-		if maybeattr is not None:
-			newattrs[attr] = maybeattr
+		if maybeattr not in _badvalues:
+			newattrs[fmlattr] = maybeattr
 	for child in _elemchildren:
+		fmlchild = _elemchildren.get(child, child)
 		maybechild = elemdict.get(child, None)
-		if maybechild is not None:
-			newchildren[child] = maybechild
-	##turn_into_fml(newattrs)
-	##turn_into_fml(newchildren)
+		if maybechild not in _badvalues:
+			newchildren[fmlchild] = maybechild
 	newElem.attrib = newattrs
 	if newchildren:
-		print newchildren
+		#print newchildren
 		for k, v in newchildren.iteritems():
-			if k is not None and v is not None:
+			if k is not None and v not in _badvalues:
 				newChild = ET.SubElement(newElem, k)
 				newChild.text = v
 	return newElem
@@ -115,10 +131,10 @@ def idtag(xmlsection, formplist):
 	maybeid = formplist.get('mp_uuid', None)
 	if maybeid is not None:
 		newmpid = ET.Element(tag='id', attrib={'mp_uuid': maybeid})
-		print "success!! mpuuid made!!"
+		#print "success!! mpuuid made!!"
 		return newmpid
 	else:
-		print "Didn't find an id in %s." % xmlsection.text
+		#print "Didn't find an id in %s." % xmlsection.text
 		pass
 		
 		
@@ -129,7 +145,7 @@ def plist_to_xml(plistform):
 	for plistsection in plistform.get('iformSectionTiesArray', []):
 		newSection = xml_section_from_plist(newForm, plistsection)
 		for plistelement in plistsection.get('iform_section', {}).get('iformFieldsArray', []):
-			print "about to work with: ", plistelement.get('field_label', 'Nameless Thing')
+			#print "about to work with: ", plistelement.get('field_label', 'Nameless Thing')
 			newElem = xml_elem_from_plist(newSection, plistelement)
 			elemID = plistelement.get('mp_uuid', None)
 			if elemID is not None:
@@ -186,6 +202,22 @@ def plist_escape_html(plist):
 		tag_to_square(section, _htmldict)
 		for element in section.get('iform_section', {}).get('iformFieldsArray', []):
 			tag_to_square(element, _htmldict)
+			
+def pull_imgs(plistform):
+	found_imgs = 0
+	imgkey = 'mpimg'
+	for section in plistform.get('iformSectionTiesArray', []):
+		for element in section.get('iform_section', {}).get('iformFieldsArray', []):
+			maybedrawing = element.get('iform_field_type_id')
+			if maybedrawing == 9:
+				maybedata = element.get('imageObjData')
+				if maybedata is not None:
+					found_imgs += 1
+					keyname = imgkey + str(found_imgs)
+					_imgpouch[keyname] = maybedata
+					##now delete/overwrite old image in plist with the imgkey name here and replace
+					##it on saving it. somehow. etree hates data types so i dunno.
+					
 
 	
 def test(file='itpl/LW Chiro SOAP.itpl'):
