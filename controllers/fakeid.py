@@ -5,8 +5,8 @@ from random import choice
 _ENCODER = "0123456789ABCDEF"
 _DASHLIST = [8, 13, 18, 23]
 _MPID = 'mp_uuid'
-_INSECTION = 'iform_section'
-_ELEMENTLIST = 'iformFieldsArray'
+_INNER = 'iform_section'
+_ELEMS = 'iformFieldsArray'
 
 def give_id():
 	"""Generates an mp_uuid.
@@ -20,18 +20,18 @@ def give_id():
 	return newid
 
 def id_wrap(id_func):
-	"""Wrapper for the uuid creating function.
-	This keeps track of which ids were produced, on the
-	very, very, very, very slim chance two are alike."""
-	def inner():
-		"""The actual workhorse!"""
+	"""Wrapper for the uuid creating function."""
+	def wrapper():
+		"""The actual workhorse!
+		This keeps track of which ids were produced, on the
+		very, very, very, very slim chance two are alike."""
 		newid = id_func()
 		while newid in all_ids:
 			newid = id_func()
 		all_ids.append(newid)
 		return newid
 	all_ids = []
-	return inner
+	return wrapper
 
 def fake_id(pyform):
 	"""Assigns new mp_uuids to form, section, and elements.
@@ -45,11 +45,8 @@ def fake_id(pyform):
 	for section in pyform.get('iformSectionTiesArray', []):
 		if not section.get(_MPID, False):
 			section[_MPID] = give_id()
-		else: pass
-		for element in section.get(_INSECTION, {}).get(_ELEMENTLIST, []):
+		for element in section.get(_INNER, {}).get(_ELEMS, []):
 			if not element.get(_MPID, False):
 				element[_MPID] = give_id()
-			else: pass
-	else: pass
 	
 give_id = id_wrap(give_id)		##wraps give_id

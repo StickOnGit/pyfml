@@ -39,11 +39,17 @@ IMGFOLDER = 'images'
 
 ##return this on element creation fail
 _BADELEMENT = _elemdict['label'](field_label="**An error occurred here. REMOVE this element and correct.**")
+##escape characters. ## for list items, [] to replace <> in blocks. are there more?
+_fmlcharsonly = {"##":"\r","[":"<","]":">"}
 
 def read_xml(xmlpath):
 	"""Loads XML from stated path."""
 	tree = ET.parse(xmlpath)
 	return tree.getroot()
+	
+def read_xml_from_str(xmlstring):
+	"""Returns ET object from a string."""
+	return ET.fromstring(xmlstring)
 	
 def new_shell_from_xml(xmlobj):
 	"""Returns a form populated with translated FML values."""
@@ -91,7 +97,7 @@ def new_elem_from_xml(xmlelement):
 		return 'id'
 	elif translator is None or elem_method is None:
 		print "Can't work with %s" % xmlelement.tag
-		print "trans: %s\t method: %s" % (translator, elem_method)
+		#print "trans: %s\t method: %s" % (translator, elem_method)
 		#print """There's no <%s> element in FML. Available elements are: \n%s
 		#""" % (elemType,''.join(['\n\t%s' % x for x in _elemdict.keys()]))
 		return _BADELEMENT
@@ -118,11 +124,12 @@ def new_elem_from_xml(xmlelement):
 		for k, v in nestedAttrib:
 			nestedData += [(k, v)]
 	for k, v in elemData + nestedData:
-		if k in translator:				##turns fml keys to .plist keys
-			k = translator[k]
+		k = translator.get(k, k)
 		v = tidy_up(v)					##cleans up strings
-		if v:							##if there's anything worth adding
-			newElem[k] = v				##add it. this might blow things up
+		if k is 'field_label' and v is not None:
+			v = str(v)					##field_label MUST be string
+		if v:							##only add if v exists
+			newElem[k] = v
 	#if 'id' in newElem:
 	#	del newElem['id'] ###OH MAN THIS SUCKS. :( WHAT A LOUSY HACK
 	if 'imageObjData' in newElem:
@@ -180,12 +187,12 @@ def tidy_up(somexml):
 	if not isinstance (somexml, (basestring, int)):
 		return somexml
 	try:
-		return int(somexml)
+		tidied = int(somexml)
 	except:
-		newstr = somexml.strip().replace('##', '\r') ##type \r?!!?!? - jean-luc picard, time's arrow pt 1
-		newstr = newstr.replace(']', '>')
-		newstr = newstr.replace('[', '<')
-		return u'%s' % newstr
+		tidied = somexml.strip()
+		for badchar in _fmlcharsonly.keys():
+			tidied = tidied.replace(badchar, _fmlcharsonly.get(badchar))
+	return tidied
 
 
 ###help methods for quick testing, not probably much use for anything else

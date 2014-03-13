@@ -104,8 +104,7 @@ def xml_elem_from_plist(parentsection, elemdict):
 	elemTagKey = elemdict.get('iform_field_type_id', 'default_fieldtype_id')
 	elementkind = _elemtagdict.get(int(elemTagKey), 'error')
 	newElem = ET.SubElement(parentsection, elementkind)
-	##str() because field_label must always be a string
-	newElem.text = str(elemdict.get('field_label', 'Default Element Name'))
+	newElem.text = elemdict.get('field_label', 'Default Element Name')
 	for attr in _elemattrib:
 		fmlattr = _elemattrib.get(attr, attr)
 		maybeattr = elemdict.get(attr, None)
@@ -204,19 +203,21 @@ def plist_escape_html(plist):
 			tag_to_square(element, _htmldict)
 			
 def pull_imgs(plistform):
-	found_imgs = 0
-	imgkey = 'mpimg'
+	#found_imgs = 0
+	#imgkey = 'mpimg'
 	for section in plistform.get('iformSectionTiesArray', []):
 		for element in section.get('iform_section', {}).get('iformFieldsArray', []):
 			maybedrawing = element.get('iform_field_type_id')
-			if maybedrawing == 9:
+			if maybedrawing == 9:		##extra step? will other things use this field?
 				maybedata = element.get('imageObjData')
 				if maybedata is not None:
-					found_imgs += 1
-					keyname = imgkey + str(found_imgs)
+					#found_imgs += 1
+					#keyname = imgkey + str(found_imgs)
+					keyname = id(maybedata)
 					_imgpouch[keyname] = maybedata
 					##now delete/overwrite old image in plist with the imgkey name here and replace
-					##it on saving it. somehow. etree hates data types so i dunno.
+					##it on saving it. somehow. etree hates plistlib.Data() objects so i dunno.
+					##in FML file... img="some_string" + the id? to ensure it gets seen?
 					
 
 	
